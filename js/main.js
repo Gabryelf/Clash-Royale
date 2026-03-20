@@ -1,30 +1,29 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-     // Арена
-    drawArena(ctx);
-    drawRiver(ctx);
-    drawBridge(ctx);
+// ГЛАВНЫЙ ЦИКЛ - запуск и отрисовка
+(function() {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
     
-    // Башни
-    drawPlayerTower(ctx, 150, 400);
-    drawEnemyTower(ctx, 650, 400);
-    drawKingTower(ctx, 400, 200, true);
+    Graphics.init(ctx);
+    UI.init(canvas);
+    GameState.startBattle();
     
-     // Войска
-    drawTroop(ctx, 200, 300, 'knight', true);
-    drawTroop(ctx, 300, 350, 'archer', true);
-    drawTroop(ctx, 500, 300, 'knight', false);
-    drawTroop(ctx, 600, 350, 'mage', false);
+    function render() {
+        Graphics.drawArena();
+        Graphics.drawPlayerTower();
+        Graphics.drawEnemyTower();
+        Graphics.drawKingTower(true);
+        Graphics.drawKingTower(false);
+        Graphics.drawUI();
+        
+        // Рисуем юнитов
+        const units = GameState.getUnits();
+        for (let i = 0; i < units.length; i++) {
+            Graphics.drawUnit(units[i]);
+        }
+        
+        requestAnimationFrame(render);
+    }
     
-    // Интерфейс
-    drawElixirBar(ctx, 6, 10);
-    drawTowerScore(ctx, 2, 1);
-    
-    requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
+    render();
+    console.log('Stage 1: Game initialized - static graphics ready');
+})();

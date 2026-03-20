@@ -3,31 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Clash Royale - Stage 1</title>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <canvas id="gameCanvas" width="900" height="600"></canvas>
+    
+    <div class="ui-bar">
+        <span id="elixirText">⚡ 5/10</span>
+        <button id="btnKnight">Knight</button>
+        <button id="btnArcher">Archer</button>
+        <button id="btnMage">Mage</button>
+        <button id="btnReset">New Battle</button>
+    </div>
 
-    <audio id="testSound" src="https://github.com/TopCollegeTCF/Clash-Royale/blob/develop/assets/souds/silent-short-click.mp3" preload="auto"></audio>
-    
-    <canvas id="gameCanvas" width="800" height="600" style="border:1px solid black;"></canvas>
-    
-    
-    <script src="js/core/feature/archer.js"></script>
-    <script src="js/core/feature/knight.js"></script>
-    <script src="js/core/feature/mage.js"></script>
+    <audio id="deploySound" preload="auto"></audio>
 
-    <script src="js/graphics/graphics.js"></script>
-    <script src="js/sound.js"></script>
+    <!-- Stage 1 Scripts -->
     <script src="js/config/config.js"></script>
-    <script src="js/core/ai.js"></script>
-    <script src="js/qa.js"></script>
-
     <script src="js/state/state.js"></script>
+    <script src="js/ui/graphics/graphics.js"></script>
     <script src="js/ui/ui.js"></script>
-    
-    <script src="js/core/core.js"></script>
     <script src="js/main.js"></script>
-
-
 </body>
 </html>
