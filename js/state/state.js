@@ -1,27 +1,142 @@
-// СОСТОЯНИЕ - данные игры
-window.GameState = {
-    isActive: false,
-    elixir: 5,
-    playerTowerHP: 1500,
-    enemyTowerHP: 1500,
-    selectedUnit: 'knight',
-    units: [],
-    
-    startBattle: function() {
-        this.isActive = true;
-        this.playerTowerHP = 1500;
-        this.enemyTowerHP = 1500;
+// ============================================================
+// state.js - Состояние игры (класс)
+// ============================================================
+
+class GameState {
+    constructor() {
+        this.isActive = false;
         this.elixir = 5;
         this.units = [];
-        console.log('Battle started!');
-    },
+        this.towers = {
+            playerLeft: null,
+            playerRight: null,
+            playerKing: null,
+            enemyLeft: null,
+            enemyRight: null,
+            enemyKing: null
+        };
+        this.lastElixirTime = 0;
+        this.selectedCardIndex = 0;
+    }
     
-    endBattle: function(winner) {
-        this.isActive = false;
-        console.log(winner === 'player' ? 'Victory!' : 'Defeat!');
-    },
+    startBattle() {
+        this.isActive = true;
+        this.elixir = window.CONFIG.GAME.startElixir;
+        this.units = [];
+        this.lastElixirTime = performance.now() / 1000;
+        
+        // Инициализация башен
+        const towerConfig = window.CONFIG.GAME.towers;
+        this.towers.playerLeft = new Tower(towerConfig.playerLeft.x, towerConfig.playerLeft.y, true, 'left');
+        this.towers.playerRight = new Tower(towerConfig.playerRight.x, towerConfig.playerRight.y, true, 'right');
+        this.towers.playerKing = new Tower(towerConfig.playerKing.x, towerConfig.playerKing.y, true, 'king');
+        this.towers.enemyLeft = new Tower(towerConfig.enemyLeft.x, towerConfig.enemyLeft.y, false, 'left');
+        this.towers.enemyRight = new Tower(towerConfig.enemyRight.x, towerConfig.enemyRight.y, false, 'right');
+        this.towers.enemyKing = new Tower(towerConfig.enemyKing.x, towerConfig.enemyKing.y, false, 'king');
+        
+        console.log('⚔️ Битва началась!');
+    }
     
-    getUnits: function() {
+    updateElixir(now) {
+        if (!this.isActive) return;
+        
+        const delta = now - this.lastElixirTime;
+        if (delta >= window.CONFIG.GAME.elixirRegenRate) {
+            this.elixir = Math.min(this.elixir + 1, window.CONFIG.GAME.maxElixir);
+            this.lastElixirTime = now;
+        }
+    }
+    
+    canDeploy(cost) {
+        return this.isActive && this.elixir >= cost;
+    }
+    
+    deployUnit(unit) {
+        const cost = unit.card ? unit.card.cost : window.CONFIG.CARDS[unit.type].cost;
+        
+        if (!this.canDeploy(cost)) {
+            return false;
+        }
+        
+        this.units.push(unit);
+        this.elixir -= cost;
+        return true;
+    }
+    
+    removeDeadUnits() {
+        this.units = this.units.filter(unit => unit.hp > 0);
+    }
+    
+    getUnits() {
         return this.units;
     }
-};
+    
+    getTower(towerId) {
+        return this.towers[towerId];
+    }
+    
+    getAllTowers() {
+        return Object.values(this.towers);
+    }
+    
+    damageTower(tower, damage) {
+        tower.hp = Math.max(0, tower.hp - damage);
+        
+        if (tower.hp <= 0) {
+            console.log(`🏰 Башня ${tower.side} ${tower.position} разрушена!`);
+        }
+        
+        return tower.hp <= 0;
+    }
+    
+    checkVictory() {
+        const allEnemyTowersDead = 
+            this.towers.enemyLeft.hp <= 0 &&
+            this.towers.enemyRight.hp <= 0 &&
+            this.towers.enemyKing.hp <= 0;
+        
+        const allPlayerTowersDead = 
+            this.towers.playerLeft.hp <= 0 &&
+            this.towers.playerRight.hp <= 0 &&
+            this.towers.playerKing.hp <= 0;
+        
+        if (allEnemyTowersDead) {
+            this.endBattle('player');
+            return 'player';
+        }
+        if (allPlayerTowersDead) {
+            this.endBattle('enemy');
+            return 'enemy';
+        }
+        return null;
+    }
+    
+    endBattle(winner) {
+        this.isActive = false;
+        console.log(`🏆 Победитель: ${winner === 'player' ? 'ИГРОК' : 'ВРАГ'}!`);
+        
+        if (winner === 'player' && window.SoundFX) {
+            window.SoundFX.playVictory();
+        } else if (window.SoundFX) {
+            window.SoundFX.playDefeat();
+        }
+    }
+    
+    getActiveTowerForUnit(unit) {
+        // Возвращает ближайшую активную башню на дорожке юнита
+        const lane = unit.lane;
+        const isEnemy = !unit.isPlayer;
+        
+        if (isEnemy) {
+            if (this.towers.playerLeft.hp > 0 && lane === 'left') return this.towers.playerLeft;
+            if (this.towers.playerRight.hp > 0 && lane === 'right') return this.towers.playerRight;
+            return this.towers.playerKing;
+        } else {
+            if (this.towers.enemyLeft.hp > 0 && lane === 'left') return this.towers.enemyLeft;
+            if (this.towers.enemyRight.hp > 0 && lane === 'right') return this.towers.enemyRight;
+            return this.towers.enemyKing;
+        }
+    }
+}
+
+window.GameState = null;

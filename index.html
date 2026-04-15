@@ -7,23 +7,38 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <canvas id="gameCanvas" width="900" height="600"></canvas>
-    
+
+  
+    <canvas id="gameCanvas" width="800" height="600" style="border:1px solid black;"></canvas>    
+
     <div class="ui-bar">
         <span id="elixirText">⚡ 5/10</span>
-        <button id="btnKnight">Knight</button>
-        <button id="btnArcher">Archer</button>
-        <button id="btnMage">Mage</button>
-        <button id="btnReset">New Battle</button>
+        
     </div>
 
-    <audio id="deploySound" preload="auto"></audio>
+    <!-- Новая панель UI - без кнопок, карты рисуются на Canvas -->
+    <div class="ui-bar" style="position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 100;">
+        <div id="deck-info" style="background: rgba(0,0,0,0.7); display: inline-block; padding: 5px 15px; border-radius: 10px; color: white; font-size: 12px;">
+            🃏 Нажмите 1-4 для выбора карты | Кликните на арену для призыва
+        </div>
+    </div>
+    <button id="btnReset" style="position: fixed; bottom: 10px; left: 10px; z-index: 200;">🔄 Новая битва</button>
 
+    <audio id="deploySound" preload="auto"></audio>
     <!-- Stage 1 Scripts -->
+    <script src="js/classes/tower.js"></script>
+    <script src="js/classes/unit.js"></script>
+    <script src="js/classes/card.js"></script>
+    <script src="js/classes/deck.js"></script>
     <script src="js/config/config.js"></script>
-    <script src="js/state/state.js"></script>
-    <script src="js/ui/graphics/graphics.js"></script>
+    <script src="js/audio/sound.js"></script>
     <script src="js/ui/ui.js"></script>
+    <script src="js/graphics/graphics.js"></script>
+    <script src="js/state/state.js"></script>
+    <script src="js/core/ai.js"></script>
+    <script src="js/core/core.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/tests/qa.js"></script>
+
 </body>
 </html>

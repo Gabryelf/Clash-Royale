@@ -1,29 +1,35 @@
-// ГЛАВНЫЙ ЦИКЛ - запуск и отрисовка
-(function() {
+// ============================================================
+// main.js - Точка входа в игру
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Clash Royale - Stage 1');
+    
     const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    Graphics.init(ctx);
-    UI.init(canvas);
-    GameState.startBattle();
-    
-    function render() {
-        Graphics.drawArena();
-        Graphics.drawPlayerTower();
-        Graphics.drawEnemyTower();
-        Graphics.drawKingTower(true);
-        Graphics.drawKingTower(false);
-        Graphics.drawUI();
-        
-        // Рисуем юнитов
-        const units = GameState.getUnits();
-        for (let i = 0; i < units.length; i++) {
-            Graphics.drawUnit(units[i]);
-        }
-        
-        requestAnimationFrame(render);
+    if (!canvas) {
+        console.error('❌ Canvas не найден!');
+        return;
     }
     
-    render();
-    console.log('Stage 1: Game initialized - static graphics ready');
-})();
+    const ctx = canvas.getContext('2d');
+    
+    // Установка размеров canvas
+    canvas.width = window.CONFIG.GAME.width;
+    canvas.height = window.CONFIG.GAME.height;
+    
+    // Создание и запуск ядра игры
+    const core = new Core(canvas, ctx);
+    await core.init();
+    
+    // Глобальные объекты для доступа из консоли (для отладки)
+    window.gameCore = core;
+    window.gameState = core.gameState;
+    window.gameGraphics = core.graphics;
+    
+    console.log('🎮 Игра запущена!');
+    
+    // QA тесты
+    if (window.QA) {
+        setTimeout(() => window.QA.runAll(), 1000);
+    }
+});
