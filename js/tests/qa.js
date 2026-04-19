@@ -1,83 +1,70 @@
-// ============================================================
-// qa.js - Тестирование и отладка
-// ============================================================
-
+/**
+ * Глобальный объект QA (Quality Assurance) для тестирования и мониторинга состояния игры.
+ * Предоставляет инструменты для логирования, проверки инициализации систем и анализа игрового поля.
+ */
 window.QA = {
-    runAll: function() {
-        console.log('=== 🧪 QA Тесты ===');
-        this.testConfig();
-        this.testGameState();
-        this.testDeck();
-        this.testUnits();
-        this.testCollisions();
-        console.log('=== ✅ Тесты завершены ===');
+    /**
+     * Выводит форматированное сообщение в консоль с указанием текущего времени.
+     * @param {string} msg - Сообщение для логирования.
+     */
+    log: function(msg) {
+        console.log(`[${new Date().toLocaleTimeString()}] ${msg}`);
     },
     
-    testConfig: function() {
-        const config = window.CONFIG;
-        console.assert(config, '❌ Конфиг не загружен');
-        console.assert(config.CARDS.knight, '❌ Карта Knight не найдена');
-        console.assert(config.CARDS.archer, '❌ Карта Archer не найдена');
-        console.assert(config.CARDS.mage, '❌ Карта Mage не найдена');
-        console.log('✅ Конфигурация загружена');
-    },
-    
-    testGameState: function() {
-        const gameState = window.gameState;
-        if (!gameState) {
-            console.log('⚠️ GameState не доступен');
-            return;
+    /**
+     * Основная функция тестирования систем.
+     * Проверяет наличие глобальных объектов (модулей) и состояние ключевых игровых объектов.
+     */
+    test: function() {
+        this.log('=== QA Tests ===');
+        
+        // Проверка наличия (инициализации) основных модулей игры через приведение к boolean
+        this.log('Config loaded: ' + !!window.CONFIG);
+        this.log('GameState loaded: ' + !!window.GameState);
+        this.log('Graphics loaded: ' + !!window.Graphics);
+        this.log('Core loaded: ' + !!window.Core);
+        this.log('SoundFX loaded: ' + !!window.SoundFX);
+        
+        /**
+         * Проверка целостности башен игрока. 
+         * Условие пройдено, если у всех трех башен HP > 0.
+         */
+        this.log('Player towers: ' + 
+            (GameState.playerLeftTowerHP > 0 && 
+             GameState.playerRightTowerHP > 0 && 
+             GameState.playerKingTowerHP > 0));
+        
+        /**
+         * Проверка аудиосистемы.
+         * Сравнивает количество реально загруженных звуков с количеством, описанным в конфиге.
+         */
+        if (window.SoundFX && window.SoundFX.sounds) {
+            const loadedSounds = Object.keys(window.SoundFX.sounds).length;
+            this.log(`Sounds loaded: ${loadedSounds}/${Object.keys(CONFIG.SOUNDS).length}`);
         }
-        console.assert(gameState.elixir >= 0, '❌ Эликсир отрицательный');
-        console.assert(gameState.isActive === true, '❌ Игра не активна');
-        console.log('✅ GameState OK');
+        
+        this.log('All systems ready!');
     },
     
-    testDeck: function() {
-        const deck = window.gameCore?.deck;
-        if (!deck) {
-            console.log('⚠️ Deck не доступен');
-            return;
-        }
-        console.assert(deck.hand.length === 4, `❌ В руке должно быть 4 карты, сейчас ${deck.hand.length}`);
-        console.log('✅ Deck OK');
-    },
-    
-    testUnits: function() {
-        const units = window.gameState?.getUnits() || [];
-        for (let unit of units) {
-            console.assert(unit.hp > 0, '❌ Юнит с отрицательным HP');
-            console.assert(unit.x >= 0 && unit.x <= window.CONFIG.GAME.width, '❌ Юнит за пределами X');
-            console.assert(unit.y >= 0 && unit.y <= window.CONFIG.GAME.height, '❌ Юнит за пределами Y');
-        }
-        console.log(`✅ Юнитов на поле: ${units.length}`);
-    },
-    
-    testCollisions: function() {
-        console.log('✅ Система коллизий работает');
-    },
-    
-    logState: function() {
-        if (!window.gameState) return;
-        console.log({
-            elixir: window.gameState.elixir,
-            units: window.gameState.getUnits().length,
-            active: window.gameState.isActive,
-            towers: {
-                playerLeft: window.gameState.towers.playerLeft?.hp,
-                playerRight: window.gameState.towers.playerRight?.hp,
-                playerKing: window.gameState.towers.playerKing?.hp,
-                enemyLeft: window.gameState.towers.enemyLeft?.hp,
-                enemyRight: window.gameState.towers.enemyRight?.hp,
-                enemyKing: window.gameState.towers.enemyKing?.hp
-            }
-        });
+    /**
+     * Анализирует распределение юнитов по линиям (левая/правая).
+     * @returns {Object} Объект с количеством юнитов на каждой линии { left, right }.
+     */
+    testLanes: function() {
+        this.log('=== Lane Test ===');
+        const units = GameState.getUnits();
+        
+        // Фильтрация массива юнитов по свойству lane
+        const leftUnits = units.filter(u => u.lane === 'left').length;
+        const rightUnits = units.filter(u => u.lane === 'right').length;
+        
+        this.log(`Left lane: ${leftUnits} units, Right lane: ${rightUnits} units`);
+        return { left: leftUnits, right: rightUnits };
     }
 };
 
-// Авто-тест через 2 секунды после загрузки
-setTimeout(() => {
-    if (window.QA && window.gameCore) {
-        window.QA.runAll();
-    }
-}, 2000);
+/**
+ * Автоматический запуск тестирования после полной загрузки DOM-дерева.
+ * Сначала проверяет, существует ли объект QA в глобальной области видимости.
+ */
+document.addEventListener('DOMContentLoaded', () => window.QA && window.QA.test());

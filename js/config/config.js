@@ -1,6 +1,8 @@
-// КОНФИГУРАЦИЯ - данные для всей игры
+// ============================================================
+// config.js - Конфигурация игры
+// ============================================================
+
 window.CONFIG = {
-    // Пути к изображениям
     IMAGES: {
         path: 'assets/images/arena/path.png',
         grass: 'assets/images/arena/grass.png',
@@ -10,17 +12,20 @@ window.CONFIG = {
         mage: 'assets/images/units/mage.png',
         playerTower: 'assets/images/towers/player_tower.png',
         enemyTower: 'assets/images/towers/enemy_tower.png',
+        kingEnemyTower: 'assets/images/towers/king-enemy-tower.png',
         kingTower: 'assets/images/towers/king_tower.png'
     },
-
-    SOUNDS: {
-        deploy: 'assets/sounds/silent-short-click.mp3',
-        hit: 'assets/sounds/silent-short-click.mp3',
-        towerHit: 'assets/sounds/silent-short-click.mp3',
-        victory: 'assets/sounds/silent-short-click.mp3',
-        defeat: 'assets/sounds/silent-short-click.mp3'
-    },
     
+    SOUNDS: {
+        deploy: 'assets/sounds/click.mp3',
+        hit: 'assets/sounds/click.mp3',
+        towerHit: 'assets/sounds/click.mp3',  
+        victory: 'assets/sounds/victory.mp3',
+        defeat: 'assets/sounds/defeat.mp3',
+        cardSelect: 'assets/sounds/click.mp3',
+        insufficient: 'assets/sounds/click.mp3',
+        towerDestroyed: 'assets/sounds/click.mp3'
+    },
     GAME: {
         width: 900,
         height: 600,
@@ -37,16 +42,16 @@ window.CONFIG = {
             enemyKing: { x: 450, y: 100, maxHp: 3000, damage: 70, range: 120 }
         }
     },
-
+    
     CARDS: {
         knight: {
             name: 'Рыцарь',
-            cost: 3,
+            cost: 1,
             unitType: 'knight',
             hp: 600,
             damage: 75,
             range: 30,
-            speed: 120,
+            speed: 2,
             attackSpeed: 0.9,
             description: 'Сбалансированный боец ближнего боя',
             rarity: 'common'
@@ -58,7 +63,7 @@ window.CONFIG = {
             hp: 400,
             damage: 60,
             range: 150,
-            speed: 100,
+            speed: 1,
             attackSpeed: 1.2,
             description: 'Атакует с расстояния',
             rarity: 'common'
@@ -70,10 +75,13 @@ window.CONFIG = {
             hp: 350,
             damage: 120,
             range: 160,
-            speed: 90,
+            speed: 3,
             attackSpeed: 1.5,
             description: 'Мощная магическая атака',
             rarity: 'rare'
         }
     }
 };
+//deploy.mp3'
+//hit.mp3'
+// tower_hit.mp3'

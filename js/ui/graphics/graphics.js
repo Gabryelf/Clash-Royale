@@ -8,19 +8,8 @@
         this.ctx = ctx;
         /** @type {Object.<string, HTMLImageElement>} Хранилище загруженных изображений */
         this.images = {};
-        /** @type {Array} Области карт для обработки кликов */
-        this.lastCardAreas = [];
-        /** @type {number} Смещение для анимации воды */
-        this.waterOffset = 0;
         this.loadAllImages();
-    }
-
-    /**
-     * Возвращает области карт для обработки кликов
-     * @returns {Array} Массив областей карт
-     */
-    getCardAreas() {
-        return this.lastCardAreas || [];
+        this.waterOffset = 0;
     }
     
     /**
@@ -34,7 +23,6 @@
             img.src = imagePaths[key];
             this.images[key] = img;
         }
-        console.log('✅ Изображения загружены:', Object.keys(this.images));
     }
     
     /**
@@ -87,76 +75,103 @@
     }
     
     /**
-     * Рисует игровое поле с дорожками и рекой
+     * Рисует игровое поле с правильными дорожками к башням
+     * Структура:
+     * - Левая дорожка: от левой башни игрока к левой башне врага
+     * - Правая дорожка: от правой башни игрока к правой башне врага
+     * - Река: горизонтальная полоса в центре, пересекающая обе дорожки
      */
     drawArena() {
         const width = window.CONFIG.GAME.width;
         const height = window.CONFIG.GAME.height;
+        const centerY = height / 2;
         
-        // Фон - трава
+        // 1. Фон - трава
         this.drawTiledImage('grass', 0, 0, width, height, 50, 50);
         
-        // Левая дорожка (вертикальная)
-        this.drawPath(150, 450, 150, 150, 60);
+        // 2. Левая дорожка (от левой башни игрока к левой башне врага)
+        const leftPath = {
+            startX: 150, startY: 450,  // левая башня игрока
+            endX: 150, endY: 150       // левая башня врага
+        };
+        this.drawPath(leftPath.startX, leftPath.startY, leftPath.endX, leftPath.endY, 60);
         
-        // Правая дорожка (вертикальная)
-        this.drawPath(750, 450, 750, 150, 60);
+        // 3. Правая дорожка (от правой башни игрока к правой башне врага)
+        const rightPath = {
+            startX: 750, startY: 450,  // правая башня игрока
+            endX: 750, endY: 150       // правая башня врага
+        };
+        this.drawPath(rightPath.startX, rightPath.startY, rightPath.endX, rightPath.endY, 60);
         
-        // Центральная дорожка к королевской башне
-        this.drawPath(450, 500, 450, 100, 50);
+        // 4. Центральная дорожка к королевской башне (опционально)
+        const kingPath = {
+            startX: 450, startY: 500,  // королевская башня игрока
+            endX: 450, endY: 100       // королевская башня врага
+        };
+        this.drawPath(kingPath.startX, kingPath.startY, kingPath.endX, kingPath.endY, 50);
         
-        // Река
+        // 5. Река (пересекает дорожки в центре)
         this.drawRiver();
     }
-    
+
     /**
      * Рисует дорожку между двумя точками
+     * @param {number} startX - Начальная X
+     * @param {number} startY - Начальная Y
+     * @param {number} endX - Конечная X
+     * @param {number} endY - Конечная Y
+     * @param {number} width - Ширина дорожки
      */
     drawPath(startX, startY, endX, endY, width) {
+        // Сохраняем контекст
         this.ctx.save();
         
+        // Вычисляем угол поворота
         const dx = endX - startX;
         const dy = endY - startY;
         const angle = Math.atan2(dy, dx);
         const length = Math.hypot(dx, dy);
         
+        // Поворачиваем и рисуем
         this.ctx.translate(startX, startY);
         this.ctx.rotate(angle);
+        
+        // Рисуем путь с текстурой
         this.drawTiledImage('path', 0, -width/2, length, width, 50, 50);
         
+        // Восстанавливаем контекст
         this.ctx.restore();
     }
-    
+
     /**
-     * Рисует реку с анимацией
+     * Рисует реку, пересекающую дорожки
      */
     drawRiver() {
         const width = window.CONFIG.GAME.width;
         const centerY = window.CONFIG.GAME.height / 2;
         const riverWidth = 25;
         
-        // Анимация воды
-        this.waterOffset = (this.waterOffset + 0.02) % (Math.PI * 2);
-        
-        // Река - горизонтальная полоса
+        // Река - горизонтальная полоса через всю арену
         this.drawTiledImage('river', 0, centerY - riverWidth/2, width, riverWidth, 50, riverWidth);
         
-        // Эффект воды (блики)
-        this.ctx.fillStyle = 'rgba(100, 200, 255, 0.4)';
-        for (let i = 0; i < 12; i++) {
-            const waveY = Math.sin(this.waterOffset + i * 0.5) * 3;
-            this.ctx.fillRect(40 + i * 70, centerY - 5 + waveY, 35, 4);
+        // Добавляем эффект воды (блики)
+        this.ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+        for (let i = 0; i < 10; i++) {
+            this.ctx.fillRect(
+                50 + i * 80, 
+                centerY - 5 + Math.sin(Date.now() / 1000 + i) * 3, 
+                40, 
+                4
+            );
         }
     }
     
     /**
      * Рисует обычную башню (игрока или врага)
-     * @param {Object} tower - Объект башни
+     * @param {Object} tower - Объект башни со свойствами x, y, hp, maxHp
      * @param {boolean} isPlayer - true - башня игрока, false - башня врага
      */
     drawTower(tower, isPlayer) {
-        if (!tower || tower.hp <= 0) return;
-        
         const imgKey = isPlayer ? 'playerTower' : 'enemyTower';
         this.drawImage(imgKey, tower.x - 35, tower.y - 50, 70, 80);
         
@@ -174,14 +189,12 @@
     }
     
     /**
-     * Рисует башню короля
-     * @param {Object} tower - Объект башни
+     * Рисует башню короля (центральную башню)
+     * @param {Object} tower - Объект башни со свойствами x, y, hp, maxHp
      * @param {boolean} isPlayer - true для башни игрока, false для врага
      */
     drawKingTower(tower, isPlayer = true) {
-        if (!tower || tower.hp <= 0) return;
-        
-        const imgKey = isPlayer ? 'kingTower' : (this.images['kingEnemyTower'] ? 'kingEnemyTower' : 'kingTower');
+        const imgKey = isPlayer ? 'kingTower' : 'kingEnemyTower';
         this.drawImage(imgKey, tower.x - 40, tower.y - 50, 80, 90);
         
         const percent = tower.hp / tower.maxHp;
@@ -196,12 +209,10 @@
     }
     
     /**
-     * Рисует игрового юнита
-     * @param {Object} unit - Объект юнита
+     * Рисует игрового юнита с полосой здоровья и индикатором команды
+     * @param {Object} unit - Объект юнита со свойствами: type, x, y, hp, maxHp, isPlayer
      */
     drawUnit(unit) {
-        if (!unit || unit.hp <= 0) return;
-        
         this.drawImage(unit.type, unit.x - 18, unit.y - 18, 36, 36);
         
         // Полоса здоровья
@@ -211,7 +222,7 @@
         this.ctx.fillStyle = '#4eff6e';
         this.ctx.fillRect(unit.x - 16, unit.y - 24, 32 * percent, 4);
         
-        // Индикатор команды
+        // Индикатор команды (красный/синий кружок)
         this.ctx.fillStyle = unit.isPlayer ? '#4488ff' : '#ff4444';
         this.ctx.beginPath();
         this.ctx.arc(unit.x - 15, unit.y - 15, 4, 0, Math.PI * 2);
@@ -220,12 +231,11 @@
     
     /**
      * Рисует пользовательский интерфейс: эликсир-бар и карты в руке
-     * @param {Object} gameState - Состояние игры
-     * @param {Object} deck - Колода
-     * @param {number} selectedCardIndex - Индекс выбранной карты
-     * @param {Object} ui - UI объект для проверки режима размещения
+     * @param {Object} gameState - Состояние игры с полями elixir, maxElixir
+     * @param {Object} deck - Колода с массивом hand
+     * @param {number} selectedCardIndex - Индекс выбранной карты или null
      */
-    drawUI(gameState, deck, selectedCardIndex, ui = null) {
+    drawUI(gameState, deck, selectedCardIndex) {
         // Эликсир бар
         const elixirPercent = gameState.elixir / window.CONFIG.GAME.maxElixir;
         this.ctx.fillStyle = '#2c1a0e';
@@ -237,11 +247,8 @@
         this.ctx.font = 'bold 18px monospace';
         this.ctx.fillText(`⚡ ${Math.floor(gameState.elixir)}/${window.CONFIG.GAME.maxElixir}`, 25, 28);
         
-        // Сброс областей карт
-        this.lastCardAreas = [];
-        
         // Отрисовка карт в руке
-        if (deck && deck.hand && deck.hand.length > 0) {
+        if (deck && deck.hand) {
             const cardWidth = 70;
             const cardHeight = 90;
             const startX = window.CONFIG.GAME.width / 2 - (cardWidth * deck.hand.length) / 2;
@@ -250,28 +257,19 @@
             for (let i = 0; i < deck.hand.length; i++) {
                 const card = deck.hand[i];
                 const x = startX + i * (cardWidth + 10);
-                const isSelected = (ui && ui.isPlacingMode && ui.selectedCardIndex === i);
-                const canAfford = gameState.elixir >= card.cost;
+                const isSelected = (selectedCardIndex === i);
                 
                 // Рамка карты
                 this.ctx.fillStyle = isSelected ? '#ffd700' : '#333';
                 this.ctx.fillRect(x - 3, startY - 3, cardWidth + 6, cardHeight + 6);
-                
-                // Фон карты
-                this.ctx.fillStyle = canAfford ? '#1a1a2e' : '#2a2a3e';
+                this.ctx.fillStyle = '#1a1a2e';
                 this.ctx.fillRect(x, startY, cardWidth, cardHeight);
-                
-                // Затемнение если не хватает эликсира
-                if (!canAfford) {
-                    this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                    this.ctx.fillRect(x, startY, cardWidth, cardHeight);
-                }
                 
                 // Иконка юнита на карте
                 this.drawImage(card.unitType, x + cardWidth/2 - 15, startY + 15, 30, 30);
                 
                 // Стоимость
-                this.ctx.fillStyle = canAfford ? '#4eff6e' : '#ff6666';
+                this.ctx.fillStyle = card.cost <= gameState.elixir ? '#4eff6e' : '#ff6666';
                 this.ctx.font = 'bold 16px monospace';
                 this.ctx.fillText(`⚡${card.cost}`, x + 5, startY + 25);
                 
@@ -279,28 +277,6 @@
                 this.ctx.fillStyle = '#ffd700';
                 this.ctx.font = '10px monospace';
                 this.ctx.fillText(card.name, x + cardWidth/2 - 20, startY + 65);
-                
-                // СОХРАНЯЕМ ОБЛАСТЬ ДЛЯ КЛИКА!
-                this.lastCardAreas.push({
-                    x: x,
-                    y: startY,
-                    width: cardWidth,
-                    height: cardHeight,
-                    card: card,
-                    index: i
-                });
-            }
-        }
-        
-        // Если есть выбранная карта, показываем подсказку
-        if (ui && ui.isPlacingMode && ui.selectedCardIndex !== undefined) {
-            const selectedCard = deck?.hand[ui.selectedCardIndex];
-            if (selectedCard) {
-                this.ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
-                this.ctx.font = 'bold 12px monospace';
-                this.ctx.fillText(`👉 Выбрано: ${selectedCard.name} (${selectedCard.cost}⚡)`, 
-                    window.CONFIG.GAME.width / 2 - 100, 
-                    window.CONFIG.GAME.height - 15);
             }
         }
     }

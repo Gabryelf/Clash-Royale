@@ -1,5 +1,5 @@
 // ============================================================
-// deck.js - Класс колоды карт
+// deck.js - Класс колоды карт    team - core : @lafneroo  ( Остапчук Андрей )
 // ============================================================
 
 class Deck {
@@ -47,31 +47,6 @@ class Deck {
         return null;
     }
     
-    useCard(index) {
-        if (index < 0 || index >= this.hand.length) return false;
-        
-        const usedCard = this.hand[index];
-        
-        // Удаляем из руки
-        this.hand.splice(index, 1);
-        
-        // Добавляем в сброс
-        this.discardPile.push(usedCard);
-        
-        // Если колода пуста, перемешиваем сброс
-        if (this.allCards.length === 0 && this.discardPile.length > 0) {
-            this.allCards = [...this.discardPile];
-            this.discardPile = [];
-            this.shuffle();
-        }
-        
-        // Добираем новую карту
-        if (this.allCards.length > 0 && this.hand.length < this.handSize) {
-            this.hand.push(this.allCards.shift());
-        }
-        
-        return true;
-    }
     
     resetCycle() {
         // Возвращаем все карты в колоду
@@ -84,6 +59,44 @@ class Deck {
     
     getHand() {
         return this.hand;
+    }
+
+    /**
+     * Проверяет и пополняет руку до нужного размера
+     */
+    refillHand() {
+        while (this.hand.length < this.handSize && (this.allCards.length > 0 || this.discardPile.length > 0)) {
+            if (this.allCards.length === 0 && this.discardPile.length > 0) {
+                // Перемешиваем сброс в колоду
+                this.allCards = [...this.discardPile];
+                this.discardPile = [];
+                this.shuffle();
+            }
+            
+            if (this.allCards.length > 0) {
+                this.hand.push(this.allCards.shift());
+            }
+        }
+    }
+
+    /**
+     * Обновленный метод useCard с автоматическим добором
+     */
+    useCard(index) {
+        if (index < 0 || index >= this.hand.length) return false;
+        
+        const usedCard = this.hand[index];
+        
+        // Удаляем из руки
+        this.hand.splice(index, 1);
+        
+        // Добавляем в сброс
+        this.discardPile.push(usedCard);
+        
+        // Автоматически добираем новую карту
+        this.refillHand();
+        
+        return true;
     }
 }
 
