@@ -25,6 +25,9 @@ class Unit {
         // Цель
         this.target = null;
         this.targetType = null; // 'unit', 'tower'
+
+        this.attackType = stats.attackType || 'melee'; // 'melee' или 'ranged'
+        this.attackRange = stats.range;
     }
     
     update(delta, allUnits, towers) {
@@ -49,14 +52,16 @@ class Unit {
     }
     
     findTarget(allUnits, towers) {
-        // Сначала ищем вражеских юнитов на той же дорожке
         let closestUnit = null;
         let closestDist = Infinity;
         
         for (let unit of allUnits) {
             if (unit.isPlayer !== this.isPlayer && unit.lane === this.lane && unit.hp > 0) {
                 const dist = Math.hypot(this.x - unit.x, this.y - unit.y);
-                if (dist < this.range && dist < closestDist) {
+                // Для дальних юнитов - атакуем в пределах range
+                // Для ближних - подходим вплотную
+                const effectiveRange = this.attackType === 'ranged' ? this.attackRange : this.attackRange;
+                if (dist < effectiveRange && dist < closestDist) {
                     closestDist = dist;
                     closestUnit = unit;
                 }
@@ -69,11 +74,12 @@ class Unit {
             return;
         }
         
-        // Если нет юнитов, атакуем башню
+        // Поиск башни
         const targetTower = this.getTargetTower(towers);
         if (targetTower && targetTower.hp > 0) {
             const dist = Math.hypot(this.x - targetTower.x, this.y - targetTower.y);
-            if (dist < this.range) {
+            const effectiveRange = this.attackType === 'ranged' ? this.attackRange : this.attackRange;
+            if (dist < effectiveRange) {
                 this.target = targetTower;
                 this.targetType = 'tower';
                 return;
@@ -120,7 +126,10 @@ class Unit {
         const dy = this.target.y - this.y;
         const dist = Math.hypot(dx, dy);
         
-        if (dist > 5) {
+        // Для дальних юнитов - останавливаемся на дистанции атаки
+        const stopDistance = this.attackType === 'ranged' ? this.attackRange * 0.8 : 10;
+        
+        if (dist > stopDistance) {
             const moveX = (dx / dist) * this.speed;
             const moveY = (dy / dist) * this.speed;
             this.x += moveX;

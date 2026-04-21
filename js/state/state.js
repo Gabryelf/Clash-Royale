@@ -5,7 +5,8 @@
 class GameState {
     constructor() {
         this.isActive = false;
-        this.elixir = 5;
+        this.playerElixir = 5;     // Эликсир игрока
+        this.aiElixir = 5;         // Эликсир ИИ
         this.units = [];
         this.towers = {
             playerLeft: null,
@@ -31,9 +32,11 @@ class GameState {
     
     startBattle() {
         this.isActive = true;
-        this.elixir = window.CONFIG.GAME.startElixir;
+        this.playerElixir = window.CONFIG.GAME.startElixir;
+        this.aiElixir = window.CONFIG.GAME.startElixir;
         this.units = [];
-        this.lastElixirTime = performance.now() / 1000;
+        this.lastPlayerElixirTime = performance.now() / 1000;
+        this.lastAIElixirTime = performance.now() / 1000;
         
         // Инициализация башен
         const towerConfig = window.CONFIG.GAME.towers;
@@ -47,29 +50,46 @@ class GameState {
         console.log('⚔️ Битва началась!');
     }
     
-    updateElixir(now) {
+    updateElixir(now, isPlayer = true) {
         if (!this.isActive) return;
         
-        const delta = now - this.lastElixirTime;
-        if (delta >= window.CONFIG.GAME.elixirRegenRate) {
-            this.elixir = Math.min(this.elixir + 1, window.CONFIG.GAME.maxElixir);
-            this.lastElixirTime = now;
+        if (isPlayer) {
+            const delta = now - this.lastPlayerElixirTime;
+            if (delta >= window.CONFIG.GAME.elixirRegenRate) {
+                this.playerElixir = Math.min(this.playerElixir + 1, window.CONFIG.GAME.maxElixir);
+                this.lastPlayerElixirTime = now;
+            }
+        } else {
+            const delta = now - this.lastAIElixirTime;
+            if (delta >= window.CONFIG.GAME.elixirRegenRate) {
+                this.aiElixir = Math.min(this.aiElixir + 1, window.CONFIG.GAME.maxElixir);
+                this.lastAIElixirTime = now;
+            }
         }
     }
     
-    canDeploy(cost) {
-        return this.isActive && this.elixir >= cost;
+    canDeploy(cost, isPlayer = true) {
+        const elixir = isPlayer ? this.playerElixir : this.aiElixir;
+        return this.isActive && elixir >= cost;
+    }
+
+    spendElixir(cost, isPlayer = true) {
+        if (isPlayer) {
+            this.playerElixir -= cost;
+        } else {
+            this.aiElixir -= cost;
+        }
     }
     
-    deployUnit(unit) {
+    deployUnit(unit, isPlayer = true) {
         const cost = unit.card ? unit.card.cost : window.CONFIG.CARDS[unit.type].cost;
         
-        if (!this.canDeploy(cost)) {
+        if (!this.canDeploy(cost, isPlayer)) {
             return false;
         }
         
         this.units.push(unit);
-        this.elixir -= cost;
+        this.spendElixir(cost, isPlayer);
         return true;
     }
     

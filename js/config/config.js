@@ -12,19 +12,22 @@ window.CONFIG = {
         mage: 'assets/images/units/mage.png',
         playerTower: 'assets/images/towers/player_tower.png',
         enemyTower: 'assets/images/towers/enemy_tower.png',
-        kingEnemyTower: 'assets/images/towers/king-enemy-tower.png',
-        kingTower: 'assets/images/towers/king_tower.png'
+        kingTower: 'assets/images/towers/king_tower.png',
+        kingEnemyTower: 'assets/images/towers/king_enemy_tower.png',
+        playerTowerDestroyed: 'assets/images/towers/player_tower_destroyed.png',
+        enemyTowerDestroyed: 'assets/images/towers/enemy_tower_destroyed.png'
     },
     
     SOUNDS: {
-        deploy: 'assets/sounds/click.mp3',
-        hit: 'assets/sounds/click.mp3',
-        towerHit: 'assets/sounds/click.mp3',  
+        deploy: 'assets/sounds/deploy.mp3',
+        hit: 'assets/sounds/hit.mp3',
+        towerHit: 'assets/sounds/tower_hit.mp3',
         victory: 'assets/sounds/victory.mp3',
         defeat: 'assets/sounds/defeat.mp3',
-        cardSelect: 'assets/sounds/click.mp3',
-        insufficient: 'assets/sounds/click.mp3',
-        towerDestroyed: 'assets/sounds/click.mp3'
+        cardSelect: 'assets/sounds/card_select.mp3',
+        insufficient: 'assets/sounds/error.mp3',
+        spell: 'assets/sounds/spell.mp3'
+    
     },
     GAME: {
         width: 900,
@@ -54,7 +57,9 @@ window.CONFIG = {
             speed: 2,
             attackSpeed: 0.9,
             description: 'Сбалансированный боец ближнего боя',
-            rarity: 'common'
+            rarity: 'common',
+            attackType: 'melee',
+            range: 30
         },
         archer: {
             name: 'Лучница',
@@ -66,7 +71,9 @@ window.CONFIG = {
             speed: 1,
             attackSpeed: 1.2,
             description: 'Атакует с расстояния',
-            rarity: 'common'
+            rarity: 'common',
+            attackType: 'ranged',
+            range: 150
         },
         mage: {
             name: 'Маг',
@@ -78,6 +85,26 @@ window.CONFIG = {
             speed: 3,
             attackSpeed: 1.5,
             description: 'Мощная магическая атака',
+            rarity: 'rare',
+            attackType: 'ranged',
+            range: 160
+        },
+        arrows: {
+            name: 'Стрелы',
+            cost: 3,
+            spellType: 'arrows',
+            damage: 120,
+            radius: 120,
+            description: 'Наносит урон всем врагам в области',
+            rarity: 'common'
+        },
+        fireball: {
+            name: 'Огненный шар',
+            cost: 4,
+            spellType: 'fireball',
+            damage: 200,
+            radius: 100,
+            description: 'Мощный взрыв в области',
             rarity: 'rare'
         }
     }
