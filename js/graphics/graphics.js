@@ -79,8 +79,8 @@
         this.drawRiver();
         
         // Мосты (деревянные текстуры)
-        this.drawBridge(150, 300, 60, 30);
-        this.drawBridge(750, 300, 60, 30);
+        this.drawBridge(150, 225, 100, 50);
+        this.drawBridge(700, 225, 100, 50);
     }
     
     drawBridge(x, y, width, height) {
@@ -174,19 +174,24 @@
     }
     
     drawUI(gameState, deck, selectedCardIndex, ui = null) {
-       // Отрисовка эликсир-бара с ячейками
-        const barWidth = 250;
-        const barHeight = 30;
+
+        // Определяем мобильное устройство
+        const isMobile = window.innerWidth <= 768;
+        const scale = isMobile ? 0.8 : 1;
+        
+        // Эликсир бар (адаптивный размер)
+        const barWidth = isMobile ? 200 : 250;
+        const barHeight = isMobile ? 24 : 30;
         const barX = window.CONFIG.GAME.width / 2 - barWidth / 2;
-        const barY = window.CONFIG.GAME.height - 250;
+        const barY = window.CONFIG.GAME.height - (isMobile ? 220 : 250);
+
         const cellCount = 10;
         const cellWidth = barWidth / cellCount;
         
-        // Фон бара
         this.ctx.fillStyle = '#2c1a0e';
         this.ctx.fillRect(barX, barY, barWidth, barHeight);
         
-        // Ячейки эликсира
+        // ИСПРАВЛЕНО: используем playerElixir
         const filledCells = Math.floor(gameState.playerElixir);
         for (let i = 0; i < cellCount; i++) {
             const cellX = barX + i * cellWidth;
@@ -195,19 +200,17 @@
             this.ctx.fillStyle = isFilled ? '#d13aff' : '#4a2a6e';
             this.ctx.fillRect(cellX + 1, barY + 1, cellWidth - 2, barHeight - 2);
             
-            // Блик на полных ячейках
             if (isFilled) {
                 this.ctx.fillStyle = 'rgba(255,255,255,0.3)';
                 this.ctx.fillRect(cellX + 1, barY + 1, cellWidth - 2, 5);
             }
         }
         
-        // Текст эликсира
         this.ctx.fillStyle = 'white';
         this.ctx.font = 'bold 14px monospace';
         this.ctx.fillText(`⚡ ${Math.floor(gameState.playerElixir)}/${window.CONFIG.GAME.maxElixir}`, 
             barX + barWidth + 10, barY + 22);
-        // СБРАСЫВАЕМ ОБЛАСТИ КАРТ
+        
         this.lastCardAreas = [];
         
         // Отрисовка карт в руке
@@ -217,19 +220,16 @@
             const startX = window.CONFIG.GAME.width / 2 - (cardWidth * deck.hand.length) / 2;
             const startY = window.CONFIG.GAME.height - 100;
             
-            console.log(`Drawing ${deck.hand.length} cards at y=${startY}`);
-            
             for (let i = 0; i < deck.hand.length; i++) {
                 const card = deck.hand[i];
                 const x = startX + i * (cardWidth + 10);
                 const isSelected = (ui && ui.isPlacingMode && ui.selectedCardIndex === i);
-                const canAfford = gameState.elixir >= card.cost;
+                // ИСПРАВЛЕНО: используем playerElixir
+                const canAfford = gameState.playerElixir >= card.cost;
                 
-                // Рамка карты
                 this.ctx.fillStyle = isSelected ? '#ffd700' : '#333';
                 this.ctx.fillRect(x - 3, startY - 3, cardWidth + 6, cardHeight + 6);
                 
-                // Фон карты
                 this.ctx.fillStyle = canAfford ? '#1a1a2e' : '#2a2a3e';
                 this.ctx.fillRect(x, startY, cardWidth, cardHeight);
                 
@@ -248,51 +248,22 @@
                 this.ctx.font = '10px monospace';
                 this.ctx.fillText(card.name, x + cardWidth/2 - 20, startY + 65);
                 
-                // СОХРАНЯЕМ ОБЛАСТЬ ДЛЯ КЛИКА
                 this.lastCardAreas.push({
-                    x: x,
-                    y: startY,
-                    width: cardWidth,
-                    height: cardHeight,
-                    card: card,
-                    index: i
+                    x: x, y: startY, width: cardWidth, height: cardHeight,
+                    card: card, index: i
                 });
             }
-            
-            console.log(`Saved ${this.lastCardAreas.length} card areas`);
         }
         
         if (ui && ui.isPlacingMode && ui.selectedCardIndex !== undefined) {
             const selectedCard = deck?.hand[ui.selectedCardIndex];
             if (selectedCard) {
-                this.ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
+                this.ctx.fillStyle = '#ffd700';
                 this.ctx.font = 'bold 12px monospace';
                 this.ctx.fillText(`👉 Выбрано: ${selectedCard.name} (${selectedCard.cost}⚡)`, 
                     window.CONFIG.GAME.width / 2 - 100, 
                     window.CONFIG.GAME.height - 15);
             }
-        }
-
-        // Следующая карта
-        if (deck && deck.allCards && deck.allCards.length > 0) {
-            const nextCard = deck.allCards[0];
-            const nextCardX = window.CONFIG.GAME.width - 90;
-            const nextCardY = window.CONFIG.GAME.height - 100;
-            
-            this.ctx.fillStyle = '#333';
-            this.ctx.fillRect(nextCardX - 3, nextCardY - 3, 76, 96);
-            this.ctx.fillStyle = '#1a1a2e';
-            this.ctx.fillRect(nextCardX, nextCardY, 70, 90);
-            
-            this.drawImage(nextCard.unitType, nextCardX + 20, nextCardY + 15, 30, 30);
-            
-            this.ctx.fillStyle = '#aaa';
-            this.ctx.font = 'bold 16px monospace';
-            this.ctx.fillText(`⚡${nextCard.cost}`, nextCardX + 5, nextCardY + 25);
-            
-            this.ctx.fillStyle = '#888';
-            this.ctx.font = '10px monospace';
-            this.ctx.fillText('Следующая', nextCardX + 5, nextCardY + 80);
         }
     }
 }

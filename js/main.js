@@ -1,5 +1,9 @@
+// ============================================================
+// main.js - Точка входа в игру (с мобильной адаптацией)
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Clash Royale - Stage 1');
+    console.log('🚀 Clash Royale - Stage 1 (Mobile Ready)');
     
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) {
@@ -7,14 +11,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
+    // Устанавливаем логические размеры canvas (не меняются)
     canvas.width = window.CONFIG.GAME.width;
     canvas.height = window.CONFIG.GAME.height;
     const ctx = canvas.getContext('2d');
     
+    // Инициализация адаптации под экран
+    const responsive = new ResponsiveManager(canvas);
+    window.responsive = responsive;
+    
+    // Инициализация эффектов
     if (window.Effects) {
         window.Effects.init(ctx);
     }
     
+    // Создание и запуск ядра игры
     const core = new Core(canvas, ctx);
     await core.init();
     
@@ -24,42 +35,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     console.log('🎮 Игра запущена!');
     
-    // ЕДИНЫЙ ОБРАБОТЧИК КЛИКОВ
-    canvas.addEventListener('click', (e) => {
+    // ===== УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК КЛИКОВ (мышь и тач) =====
+    const handleInteraction = (clientX, clientY) => {
         if (!core.gameState.isActive) return;
         
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+        // Преобразуем координаты экрана в координаты canvas
+        const canvasCoords = responsive.screenToCanvas(clientX, clientY);
+        const clickX = canvasCoords.x;
+        const clickY = canvasCoords.y;
         
-        const clickX = (e.clientX - rect.left) * scaleX;
-        const clickY = (e.clientY - rect.top) * scaleY;
-        
-        console.log(`Click at (${clickX}, ${clickY})`);
-        console.log(`isPlacingMode: ${core.ui.isPlacingMode}`);
+        // Проверяем, что клик в пределах canvas
+        if (clickX < 0 || clickX > canvas.width || clickY < 0 || clickY > canvas.height) return;
         
         // Проверяем клик по картам
         const cardAreas = core.graphics.getCardAreas();
-        console.log(`Card areas found: ${cardAreas.length}`);
-        
         for (let area of cardAreas) {
             if (clickX >= area.x && clickX <= area.x + area.width &&
                 clickY >= area.y && clickY <= area.y + area.height) {
-                console.log(`Clicked on card: ${area.card.name}`);
                 core.ui.handleCardClick(area.index, area.card);
-                e.stopPropagation();
                 return;
             }
         }
         
-        // Если в режиме размещения - пробуем призвать
+        // Если в режиме размещения - призываем юнита
         if (core.ui.isPlacingMode && clickY > window.CONFIG.GAME.height / 2) {
-            console.log(`Deploying at (${clickX}, ${clickY})`);
             core.ui.deployAtPosition(clickX, clickY);
-        } else if (core.ui.isPlacingMode) {
-            console.log('Click on enemy side - ignoring');
+        }
+    };
+    
+    // Обработка мыши (ПК)
+    canvas.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        handleInteraction(e.clientX, e.clientY);
+    });
+    
+    // Обработка касаний (мобильные)
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        if (touch) {
+            handleInteraction(touch.clientX, touch.clientY);
         }
     });
+    
+    // Запрещаем контекстное меню на canvas
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     
     // Кнопка сброса
     const btnReset = document.getElementById('btnReset');
@@ -70,7 +90,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             core.ui.selectedCardIndex = 0;
             core.ui.isPlacingMode = false;
             if (core.ui.placementTimeout) clearTimeout(core.ui.placementTimeout);
+            if (window.Effects) window.Effects.clear();
             console.log('🔄 Новая битва!');
         };
     }
+    
+    // Обработка изменения ориентации экрана
+    window.addEventListener('resize', () => {
+        responsive.setup();
+    });
+    
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => responsive.setup(), 100);
+    });
 });

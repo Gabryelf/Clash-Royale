@@ -65,6 +65,10 @@ class Core {
         // now: число - текущее время в секундах (используется для генерации эликсира и задержек AI)
         
         if (!this.gameState.isActive) return;   // Если игра окончена (кто-то победил), не обновляем логику
+
+        if (window.Effects) {
+            window.Effects.update(delta);
+        }
         
         // Обновление эликсира - добавляем эликсир игроку и AI с течением времени
         this.gameState.updateElixir(now);
@@ -164,19 +168,19 @@ class Core {
      */
     drawPlacementIndicator() {
         // Устанавливаем полупрозрачный желтый фон для зоны призыва (нижняя половина поля)
-        this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+        //this.ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
         // Устанавливаем желтую обводку для контура зоны призыва
-        this.ctx.strokeStyle = '#ffd700';
+        //this.ctx.strokeStyle = '#ffd700';
         // Толщина линии обводки - 2 пикселя
-        this.ctx.lineWidth = 2;
+        //this.ctx.lineWidth = 2;
         
         // Заливаем нижнюю половину поля полупрозрачным желтым цветом
         // window.CONFIG.GAME.height / 2 - это вертикальная граница, разделяющая поле пополам
         // Юнитов можно призывать только на своей половине поля
-        this.ctx.fillRect(0, window.CONFIG.GAME.height / 2, window.CONFIG.GAME.width, window.CONFIG.GAME.height / 2);
+        //this.ctx.fillRect(0, window.CONFIG.GAME.height / 2, window.CONFIG.GAME.width, window.CONFIG.GAME.height / 2);
         
         // Рисуем желтую рамку вокруг нижней половины поля для привлечения внимания
-        this.ctx.strokeRect(0, window.CONFIG.GAME.height / 2, window.CONFIG.GAME.width, window.CONFIG.GAME.height / 2);
+        //this.ctx.strokeRect(0, window.CONFIG.GAME.height / 2, window.CONFIG.GAME.width, window.CONFIG.GAME.height / 2);
         
         // Текст подсказки для игрока - что нужно сделать для призыва юнита
         this.ctx.fillStyle = '#ffd700';  // Золотистый цвет текста

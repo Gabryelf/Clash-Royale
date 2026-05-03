@@ -1,32 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clash Royale - Stage 1</title>
-    <link rel="stylesheet" type="text/css" href="css/styles.css">
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+        <title>Clash Royale - Stage 1</title>
+        <link rel="stylesheet" type="text/css" href="css/styles.css">
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            body {
+                background: #0a0a1a;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                overflow: hidden;
+                touch-action: none; /* Отключаем жесты браузера */
+            }
+            
+            canvas {
+                display: block;
+                margin: 0 auto;
+                cursor: pointer;
+                touch-action: none;
+            }
+            
+            /* Адаптация для разных размеров экрана */
+            @media (max-width: 768px) {
+                body {
+                    background: #000;
+                }
+            }
+            
+            @media (orientation: portrait) {
+                body {
+                    flex-direction: column;
+                }
+            }
+            
+            @media (orientation: landscape) {
+                body {
+                    flex-direction: row;
+                }
+            }
+        </style>
+    </head>
 <body>
 
   
     <canvas id="gameCanvas" width="800" height="600" style="border:1px solid black;"></canvas>    
 
-        <!-- Новая панель UI - без кнопок, карты рисуются на Canvas -->
-    <div class="ui-bar" style="position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 100;">
-        <div id="deck-info" style="background: rgba(0,0,0,0.7); display: inline-block; padding: 5px 15px; border-radius: 10px; color: white; font-size: 12px;">
-            🃏 Нажмите 1-4 для выбора карты | Кликните на арену для призыва
-        </div>
-    </div>
-    <button id="btnReset" style="position: fixed; bottom: 10px; left: 10px; z-index: 200;">🔄 Новая битва</button>
 
-    <audio id="deploySound" preload="auto"></audio>
+    <div id="deck-info" style="background: rgba(0,0,0,0.7); display: inline-block; padding: 5px 15px; border-radius: 10px; color: white; font-size: 12px;">
+    </div>
+    <button id="btnReset" style="position: fixed; bottom: 20px; left: 20px; 
+        padding: 10px 20px; background: #ffd700; border: none; 
+        border-radius: 25px; font-weight: bold; cursor: pointer;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+        🔄 Новая битва
+    </button>
+
+
+    <!-- ===== UTILS ===== -->
+    <script src="js/utils/responsive.js"></script>
+
     <!-- Stage 1 Scripts -->
     <script src="js/config/config.js"></script>
     <script src="js/classes/unit.js"></script>
     <script src="js/classes/deck.js"></script>
     <script src="js/classes/card.js"></script>
     <script src="js/classes/tower.js"></script>
-    <script src="js/effects.js"></script>
+    <script src="js/graphics/effects.js"></script>
     <script src="js/audio/sound.js"></script>
     <script src="js/ui/ui.js"></script>
     <script src="js/graphics/graphics.js"></script>

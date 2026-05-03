@@ -91,7 +91,6 @@
     addDeployEffect(x, y) {
         if (!this.enabled) return;
         
-        // Круговой эффект
         this.particles.push({
             type: 'deploy',
             x: x,
@@ -102,7 +101,6 @@
             scale: 1
         });
         
-        // Частицы призыва
         const particles = [];
         for (let i = 0; i < 12; i++) {
             const angle = Math.random() * Math.PI * 2;
@@ -164,7 +162,6 @@
             y: y
         });
         
-        // Добавляем небольшую вспышку
         this.screenFlash('255, 200, 50', 0.1);
     }
     
@@ -205,7 +202,6 @@
             radius: 50
         });
         
-        // Большая вспышка экрана
         this.screenFlash('255, 100, 0', 0.3);
     }
     
@@ -217,10 +213,9 @@
     addCardSelectEffect(x, y) {
         if (!this.enabled) return;
         
-        // Круговой эффект вокруг карты
         this.particles.push({
             type: 'cardSelect',
-            x: x + 35, // Центр карты
+            x: x + 35,
             y: y + 45,
             radius: 40,
             life: 0.35,
@@ -228,7 +223,6 @@
             scale: 1
         });
         
-        // Сверкающие частицы
         const particles = [];
         for (let i = 0; i < 8; i++) {
             const angle = Math.random() * Math.PI * 2;
@@ -285,7 +279,6 @@
             maxLife: 0.7
         });
         
-        // Красная вспышка
         this.screenFlash('255, 0, 0', 0.15);
     }
     
@@ -297,7 +290,6 @@
     addTowerDestroyedEffect(x, y) {
         if (!this.enabled) return;
         
-        // Множественные взрывы
         for (let i = 0; i < 3; i++) {
             setTimeout(() => {
                 this.addExplosionEffect(
@@ -307,7 +299,6 @@
             }, i * 100);
         }
         
-        // Специальные частицы разрушения
         const particles = [];
         for (let i = 0; i < 30; i++) {
             particles.push({
@@ -329,12 +320,11 @@
             maxLife: 1.1
         });
         
-        // Яркая вспышка
         this.screenFlash('255, 255, 255', 0.4);
     }
     
     /**
-     * Добавляет эффект лечения (для будущих карт)
+     * Добавляет эффект лечения
      * @param {number} x - X координата
      * @param {number} y - Y координата
      */
@@ -369,11 +359,17 @@
      * @param {number} duration - Длительность в секундах
      */
     screenFlash(color = '255,255,255', duration = 0.15) {
+        // ИСПРАВЛЕНО: добавляем вспышку в массив
         this.flashes.push({
             color: color,
             life: duration,
             maxLife: duration
         });
+        
+        // Ограничиваем количество вспышек (не больше 5)
+        if (this.flashes.length > 5) {
+            this.flashes.shift();
+        }
     }
     
     /**
@@ -383,21 +379,18 @@
     update(delta) {
         if (!this.enabled) return;
         
-        // Ограничиваем delta для предотвращения скачков
         const safeDelta = Math.min(delta, 0.033);
         
-        // Обновляем частицы
-        for (let i = 0; i < this.particles.length; i++) {
+        // Обновляем частицы (проходим с конца, чтобы безопасно удалять)
+        for (let i = this.particles.length - 1; i >= 0; i--) {
             const effect = this.particles[i];
             effect.life -= safeDelta;
             
             if (effect.life <= 0) {
                 this.particles.splice(i, 1);
-                i--;
                 continue;
             }
             
-            // Обновляем частицы внутри эффекта
             if (effect.particles) {
                 for (let p of effect.particles) {
                     p.x += p.vx * safeDelta;
@@ -406,7 +399,6 @@
                 }
             }
             
-            // Обновляем масштаб круговых эффектов
             if (effect.type === 'deploy' || effect.type === 'cardSelect') {
                 const progress = 1 - (effect.life / effect.maxLife);
                 effect.radius = effect.maxLife * 40 * (1 - progress);
@@ -414,12 +406,11 @@
             }
         }
         
-        // Обновляем вспышки
-        for (let i = 0; i < this.flashes.length; i++) {
+        // Обновляем вспышки (проходим с конца)
+        for (let i = this.flashes.length - 1; i >= 0; i--) {
             this.flashes[i].life -= safeDelta;
             if (this.flashes[i].life <= 0) {
                 this.flashes.splice(i, 1);
-                i--;
             }
         }
     }
@@ -434,24 +425,20 @@
         for (let effect of this.particles) {
             const alpha = Math.min(1, effect.life / (effect.maxLife || effect.life));
             
-            // Круговые эффекты
             if (effect.type === 'deploy') {
                 this.ctx.save();
                 this.ctx.shadowBlur = 0;
                 
-                // Внешнее свечение
                 this.ctx.beginPath();
                 this.ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
                 this.ctx.fillStyle = `rgba(${this.colors.deploy.primary}, ${alpha * 0.4})`;
                 this.ctx.fill();
                 
-                // Внутренний круг
                 this.ctx.beginPath();
                 this.ctx.arc(effect.x, effect.y, effect.radius * 0.6, 0, Math.PI * 2);
                 this.ctx.fillStyle = `rgba(${this.colors.deploy.secondary}, ${alpha * 0.7})`;
                 this.ctx.fill();
                 
-                // Спарклы
                 for (let i = 0; i < 8; i++) {
                     const angle = (Date.now() / 200 + i) * Math.PI * 2 / 8;
                     const rad = effect.radius * 0.8;
@@ -470,7 +457,6 @@
                 this.ctx.save();
                 this.ctx.shadowBlur = 0;
                 
-                // Золотое свечение
                 this.ctx.beginPath();
                 this.ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
                 this.ctx.fillStyle = `rgba(${this.colors.cardSelect.primary}, ${alpha * 0.5})`;
@@ -484,7 +470,6 @@
                 this.ctx.restore();
                 
             } else if (effect.particles) {
-                // Эффекты с частицами
                 for (let p of effect.particles) {
                     if (p.life <= 0) continue;
                     
@@ -496,7 +481,6 @@
                     this.ctx.arc(p.x, p.y, p.size * pAlpha, 0, Math.PI * 2);
                     this.ctx.fill();
                     
-                    // Добавляем свечение для ярких частиц
                     if (p.size > 3) {
                         this.ctx.fillStyle = `rgba(${color.secondary}, ${pAlpha * 0.5})`;
                         this.ctx.beginPath();
@@ -510,7 +494,7 @@
         // Рисуем вспышки
         for (let flash of this.flashes) {
             const alpha = flash.life / flash.maxLife;
-            this.ctx.fillStyle = `rgba(${flash.color}, ${alpha * 0.6})`;
+            this.ctx.fillStyle = `rgba(${flash.color}, ${alpha * 0.4})`;
             this.ctx.fillRect(0, 0, window.CONFIG.GAME.width, window.CONFIG.GAME.height);
         }
     }
@@ -521,6 +505,7 @@
     clear() {
         this.particles = [];
         this.flashes = [];
+        console.log('✨ Все эффекты очищены');
     }
     
     /**
@@ -535,7 +520,7 @@
     }
     
     /**
-     * Создает текстовый эффект (урон, исцеление)
+     * Создает текстовый эффект
      * @param {number} x - X координата
      * @param {number} y - Y координата
      * @param {string} text - Текст
@@ -554,25 +539,6 @@
             color: color,
             vy: -50
         });
-    }
-    
-    /**
-     * Рисует текстовые эффекты (дополнительный метод для draw)
-     */
-    drawTextEffects() {
-        for (let effect of this.particles) {
-            if (effect.type === 'text') {
-                const alpha = effect.life / effect.maxLife;
-                this.ctx.font = `bold ${Math.floor(16 * (1 - alpha) + 12)}px monospace`;
-                this.ctx.fillStyle = effect.color;
-                this.ctx.shadowBlur = 0;
-                this.ctx.fillText(
-                    effect.text, 
-                    effect.x, 
-                    effect.y - (1 - alpha) * 30
-                );
-            }
-        }
     }
 }
 

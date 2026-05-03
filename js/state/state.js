@@ -1,12 +1,12 @@
 // ============================================================
-// СОСТОЯНИЕ - данные игры TEAM-Game state 82v(Вадим)
+// СОСТОЯНИЕ - данные игры
 // ============================================================
 
 class GameState {
     constructor() {
         this.isActive = false;
-        this.playerElixir = 5;     // Эликсир игрока
-        this.aiElixir = 5;         // Эликсир ИИ
+        this.playerElixir = 5;
+        this.aiElixir = 5;
         this.units = [];
         this.towers = {
             playerLeft: null,
@@ -16,10 +16,10 @@ class GameState {
             enemyRight: null,
             enemyKing: null
         };
-        this.lastElixirTime = 0;
+        this.lastPlayerElixirTime = 0;
+        this.lastAIElixirTime = 0;
         this.selectedCardIndex = 0;
-        // Добавить в конструктор GameState:
-        this.selectedCard = null; // Выбранная карта для размещен
+        this.selectedCard = null;
     }
 
     selectCard(card) {
@@ -35,12 +35,12 @@ class GameState {
         this.playerElixir = window.CONFIG.GAME.startElixir;
         this.aiElixir = window.CONFIG.GAME.startElixir;
         this.units = [];
-        this.lastPlayerElixirTime = performance.now() / 1000;
-        this.lastAIElixirTime = performance.now() / 1000;
+        const now = performance.now() / 1000;
+        this.lastPlayerElixirTime = now;
+        this.lastAIElixirTime = now;
         
-        // Инициализация башен
         const towerConfig = window.CONFIG.GAME.towers;
-        this.towers.playerLeft = new Tower(towerConfig.playerLeft.x, towerConfig.playerLeft.y, true, 'left')
+        this.towers.playerLeft = new Tower(towerConfig.playerLeft.x, towerConfig.playerLeft.y, true, 'left');
         this.towers.playerRight = new Tower(towerConfig.playerRight.x, towerConfig.playerRight.y, true, 'right');
         this.towers.playerKing = new Tower(towerConfig.playerKing.x, towerConfig.playerKing.y, true, 'king');
         this.towers.enemyLeft = new Tower(towerConfig.enemyLeft.x, towerConfig.enemyLeft.y, false, 'left');
@@ -50,21 +50,19 @@ class GameState {
         console.log('⚔️ Битва началась!');
     }
     
-    updateElixir(now, isPlayer = true) {
+    updateElixir(now) {
         if (!this.isActive) return;
         
-        if (isPlayer) {
-            const delta = now - this.lastPlayerElixirTime;
-            if (delta >= window.CONFIG.GAME.elixirRegenRate) {
-                this.playerElixir = Math.min(this.playerElixir + 1, window.CONFIG.GAME.maxElixir);
-                this.lastPlayerElixirTime = now;
-            }
-        } else {
-            const delta = now - this.lastAIElixirTime;
-            if (delta >= window.CONFIG.GAME.elixirRegenRate) {
-                this.aiElixir = Math.min(this.aiElixir + 1, window.CONFIG.GAME.maxElixir);
-                this.lastAIElixirTime = now;
-            }
+        const playerDelta = now - this.lastPlayerElixirTime;
+        if (playerDelta >= window.CONFIG.GAME.elixirRegenRate) {
+            this.playerElixir = Math.min(this.playerElixir + 1, window.CONFIG.GAME.maxElixir);
+            this.lastPlayerElixirTime = now;
+        }
+        
+        const aiDelta = now - this.lastAIElixirTime;
+        if (aiDelta >= window.CONFIG.GAME.elixirRegenRate) {
+            this.aiElixir = Math.min(this.aiElixir + 1, window.CONFIG.GAME.maxElixir);
+            this.lastAIElixirTime = now;
         }
     }
     
@@ -90,11 +88,16 @@ class GameState {
         
         this.units.push(unit);
         this.spendElixir(cost, isPlayer);
+        console.log(`📯 Призван ${unit.type} (${cost}⚡), игрок:${isPlayer}, всего юнитов: ${this.units.length}`);
         return true;
     }
     
     removeDeadUnits() {
+        const before = this.units.length;
         this.units = this.units.filter(unit => unit.hp > 0);
+        if (before !== this.units.length) {
+            console.log(`💀 Удалено мертвых юнитов: ${before - this.units.length}`);
+        }
     }
     
     getUnits() {
@@ -114,6 +117,9 @@ class GameState {
         
         if (tower.hp <= 0) {
             console.log(`🏰 Башня ${tower.side} ${tower.position} разрушена!`);
+            if (window.Effects) {
+                window.Effects.addTowerDestroyedEffect(tower.x, tower.y);
+            }
         }
         
         return tower.hp <= 0;
@@ -143,7 +149,7 @@ class GameState {
     
     endBattle(winner) {
         this.isActive = false;
-        console.log(`🏆 Победитель: ${winner === 'player' ? 'ИГРОК' : 'ВРАГ'}!`);
+        console.log(`🏆 ПОБЕДА! ${winner === 'player' ? 'ИГРОК' : 'ВРАГ'} выиграл битву!`);
         
         if (winner === 'player' && window.SoundFX) {
             window.SoundFX.playVictory();
@@ -151,37 +157,12 @@ class GameState {
             window.SoundFX.playDefeat();
         }
     }
-    
-    getActiveTowerForUnit(unit) {
-        // Возвращает ближайшую активную башню на дорожке юнита
-        const lane = unit.lane;
-        const isEnemy = !unit.isPlayer;
-        
-        if (isEnemy) {
-            if (this.towers.playerLeft.hp > 0 && lane === 'left') return this.towers.playerLeft;
-            if (this.towers.playerRight.hp > 0 && lane === 'right') return this.towers.playerRight;
-            return this.towers.playerKing;
-        } else {
-            if (this.towers.enemyLeft.hp > 0 && lane === 'left') return this.towers.enemyLeft;
-            if (this.towers.enemyRight.hp > 0 && lane === 'right') return this.towers.enemyRight;
-            return this.towers.enemyKing;
-        }
-    }
 
-    /**
-     * Проверяет, может ли игрок разместить юнита в указанной позиции
-     * @param {number} x - X координата
-     * @param {number} y - Y координата
-     * @param {string} lane - Дорожка
-     * @returns {boolean}
-     */
     canPlaceAt(x, y, lane) {
-        // Проверка, что позиция на своей половине поля
         if (y < window.CONFIG.GAME.height / 2) {
             return false;
         }
         
-        // Проверка, что позиция на правильной дорожке
         const isLeftLane = (lane === 'left' && x < window.CONFIG.GAME.width / 2);
         const isRightLane = (lane === 'right' && x > window.CONFIG.GAME.width / 2);
         
@@ -193,4 +174,4 @@ class GameState {
     }
 }
 
-window.GameState = null;
+window.GameState = GameState;

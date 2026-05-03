@@ -5,12 +5,19 @@
 }
 
 body {
-    background: #1a472a;
+    margin: 0;
+    min-height: 100vh;
+    background: url('../assets/images/arena/background.jpg');
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    font-family: monospace;
+    font-family: 'Arial', sans-serif;
+}
+.game-container {
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    border-radius: 20px;
+    background: rgba(0,0,0,0.2);
 }
 canvas {
     display: block;
@@ -41,4 +48,90 @@ button {
 }
 button:hover { 
     background: #e09d3a; 
+}
+
+/* ============================================================
+   Мобильная адаптация
+   ============================================================ */
+
+/* Базовые стили для всех устройств */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+    touch-action: pan-x pan-y; /* Разрешаем панорамирование, но не масштабирование */
+    font-family: 'Arial', sans-serif;
+}
+
+canvas {
+    display: block;
+    margin: 0 auto;
+    cursor: pointer;
+    touch-action: none;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+}
+
+/* Стили для кнопок на мобильных */
+button {
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+/* Адаптация для очень маленьких экранов */
+@media (max-width: 480px) {
+    button {
+        padding: 8px 16px !important;
+        font-size: 12px !important;
+    }
+    
+    .gameover-stats {
+        padding: 10px 20px !important;
+        min-width: 250px !important;
+    }
+    
+    .stat-row {
+        font-size: 12px !important;
+    }
+}
+
+/* Альбомная ориентация */
+@media (orientation: landscape) and (max-height: 500px) {
+    canvas {
+        max-height: 90vh;
+    }
+}
+
+/* Портретная ориентация */
+@media (orientation: portrait) and (max-width: 768px) {
+    canvas {
+        max-width: 95vw;
+    }
+    
+    #btnReset {
+        bottom: 10px !important;
+        left: 10px !important;
+        padding: 6px 12px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* Отключаем анимации на слабых устройствах */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
